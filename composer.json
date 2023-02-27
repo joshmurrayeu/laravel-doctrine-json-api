@@ -1,0 +1,31 @@
+{
+  "name": "joshmurrayeu/laravel-doctrine-json-api",
+  "description": "A Laravel 9 package for laravel-doctrine/orm and tobyzerner/json-api-server support",
+  "type": "library",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Josh Murray",
+      "email": "josh@jmwd.tech"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "JMWD\\JsonApi\\": "src"
+    }
+  },
+  "require": {
+    "laravel-doctrine/orm": "~1.8",
+    "tobyz/json-api-server": "~0.2"
+  },
+  "require-dev": {
+    "laravel/framework": "^9.19",
+    "phpunit/phpunit": "^9.5.10",
+    "friendsofphp/php-cs-fixer": "^3.14",
+    "mockery/mockery": "^1.5"
+  },
+  "scripts": {
+    "php-cs-fixer:dummy": "php-cs-fixer fix --config=./.php_cs --dry-run",
+    "php-cs-fixer:real": "php-cs-fixer fix --config=./.php_cs"
+  }
+}
