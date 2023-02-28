@@ -88,7 +88,7 @@ abstract class Adapter implements AdapterInterface
     {
         $attributeName = $attribute->getName();
 
-        $query->andWhere("e.{$attributeName} = :{$attributeName}")
+        $query->andWhere("e.{$attributeName} {$operator} :{$attributeName}")
             ->setParameter($attributeName, $value);
     }
 
