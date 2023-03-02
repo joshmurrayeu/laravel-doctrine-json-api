@@ -4,17 +4,20 @@ namespace JMWD\JsonApi\Extension\Auth;
 
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Auth;
+use JMWD\JsonApi\Extension\Auth\Contracts\JWTSubject;
+use JMWD\JsonApi\Extension\Auth\Exceptions\Missing\MissingAuthenticationAttributes;
+use JMWD\JsonApi\Extension\Auth\Exceptions\Missing\MissingAuthenticationCredentials;
+use JMWD\JsonApi\Extension\Auth\Exceptions\Missing\MissingAuthenticationData;
+use JMWD\JsonApi\Extension\Auth\Exceptions\Missing\MissingAuthenticationEmail;
+use JMWD\JsonApi\Extension\Auth\Exceptions\Missing\MissingAuthenticationPassword;
 use JMWD\JsonApi\Extension\Auth\Exceptions\InvalidCredentials;
 use JMWD\JsonApi\Extension\Auth\Exceptions\UnauthorizedException;
-use Nyholm\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 use Tobyz\JsonApiServer\Context;
 use Tobyz\JsonApiServer\Endpoint\Concerns\FindsResources;
 use Tobyz\JsonApiServer\Endpoint\Show;
 use Tobyz\JsonApiServer\Extension\Extension;
 use Tymon\JWTAuth\JWTGuard;
-
-use function Tobyz\JsonApiServer\json_api_response;
 
 class AuthExtension extends Extension
 {
@@ -58,12 +61,34 @@ class AuthExtension extends Extension
     /**
      * @param Context $context
      *
-     * @return Response
+     * @return ResponseInterface
      */
-    protected function login(Context $context): Response
+    protected function login(Context $context): ResponseInterface
     {
         $request = collect($context->getRequest()->getParsedBody());
-        $credentials = $request->only(['email', 'password'])->toArray();
+
+        if (($data = collect($request->get('data'))) && $data->isEmpty()) {
+            throw new MissingAuthenticationData();
+        }
+
+        if (($attributes = collect($data->get('attributes'))) && $attributes->isEmpty()) {
+            throw new MissingAuthenticationAttributes();
+        }
+
+        $hasEmail = $attributes->has('email');
+        $hasPassword = $attributes->has('password');
+
+        if ($hasEmail === false) {
+            if ($hasPassword === false) {
+                throw new MissingAuthenticationCredentials();
+            }
+
+            throw new MissingAuthenticationEmail();
+        } elseif ($hasPassword === false) {
+            throw new MissingAuthenticationPassword();
+        }
+
+        $credentials = $attributes->only(['email', 'password'])->toArray();
 
         $jwt = $this->getAuthGuard()->attempt($credentials);
 
@@ -71,11 +96,7 @@ class AuthExtension extends Extension
             throw new InvalidCredentials();
         }
 
-        return json_api_response([
-            'auth-extension:response' => [
-                'jwt' => $jwt,
-            ],
-        ]);
+        return $this->userAsJsonApiObject($context, $jwt);
     }
 
     /**
@@ -93,8 +114,23 @@ class AuthExtension extends Extension
             throw new UnauthorizedException();
         }
 
+        return $this->userAsJsonApiObject($context);
+    }
+
+    /**
+     * @param Context     $context
+     * @param string|null $jwt
+     *
+     * @return ResponseInterface
+     */
+    protected function userAsJsonApiObject(Context $context, ?string $jwt = null): ResponseInterface
+    {
         $resourceType = $context->getApi()->getResourceType('users');
-        $entity = $authGuard->user();
+
+        /** @var JWTSubject $entity */
+        $entity = $this->getAuthGuard()->user();
+
+        $entity->setJWT($jwt);
 
         return (new Show())->handle($context, $resourceType, $entity);
     }
