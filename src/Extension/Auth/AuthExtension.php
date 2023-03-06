@@ -24,6 +24,11 @@ class AuthExtension extends Extension
     use FindsResources;
 
     /**
+     * @var Guard|JWTGuard $guard
+     */
+    protected Guard|JWTGuard $guard;
+
+    /**
      * @param array $options
      */
     public function __construct(
@@ -90,13 +95,35 @@ class AuthExtension extends Extension
 
         $credentials = $attributes->only(['email', 'password'])->toArray();
 
-        $jwt = $this->getAuthGuard()->attempt($credentials);
+        $jwt = $this->doLogin($credentials);
 
         if (empty($jwt)) {
             throw new InvalidCredentials();
         }
 
-        return $this->userAsJsonApiObject($context, $jwt);
+        return $this->userAsJsonApiObject($context, $this->onLogin($jwt));
+    }
+
+    /**
+     * @param array $credentials
+     *
+     * @return bool|string
+     */
+    protected function doLogin(array $credentials): bool|string
+    {
+        return $this->getAuthGuard()->attempt($credentials);
+    }
+
+    /**
+     * A callback function upon login.
+     *
+     * @param string $jwt
+     *
+     * @return string
+     */
+    protected function onLogin(string $jwt): string
+    {
+        return $jwt;
     }
 
     /**
@@ -136,10 +163,26 @@ class AuthExtension extends Extension
     }
 
     /**
+     * @param string|null $guard
+     *
      * @return Guard|JWTGuard
      */
-    private function getAuthGuard(): Guard|JWTGuard
+    protected function getAuthGuard(?string $guard = null): Guard|JWTGuard
     {
-        return Auth::guard();
+        if (empty($this->guard) || !empty($guard)) {
+            $this->guard = Auth::guard($guard);
+        }
+
+        return $this->guard;
+    }
+
+    /**
+     * @param Guard $guard
+     *
+     * @return void
+     */
+    protected function setGuard(Guard $guard): void
+    {
+        $this->guard = $guard;
     }
 }
