@@ -2,7 +2,6 @@
 
 namespace JMWD\JsonApi;
 
-use Doctrine\ORM\EntityManager;
 use Doctrine\Persistence\ManagerRegistry;
 use Illuminate\Support\ServiceProvider;
 use JMWD\JsonApi\Database\Adapter;

@@ -105,7 +105,7 @@ class AuthExtension extends Extension
     }
 
     /**
-     * @param array $credentials
+     * @param array<string, string> $credentials
      *
      * @return bool|string
      */
