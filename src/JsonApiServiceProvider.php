@@ -6,8 +6,6 @@ use Doctrine\Persistence\ManagerRegistry;
 use Illuminate\Support\ServiceProvider;
 use JMWD\JsonApi\Database\Adapter;
 use JMWD\JsonApi\Response\Schema;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
 use Tobyz\JsonApiServer\JsonApi;
 
 /**
