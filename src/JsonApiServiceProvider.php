@@ -26,21 +26,20 @@ class JsonApiServiceProvider extends ServiceProvider
     }
 
     /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     *
      * @return void
      */
     public function register(): void
     {
-        $jsonApi = new JsonApi(url('/v1'));
-        $managerRegistry = $this->app->get(ManagerRegistry::class);
+        $this->booting(function () {
+            $jsonApi = new JsonApi(url('/v1'));
+            $managerRegistry = $this->app->get(ManagerRegistry::class);
 
-        $this->registerResourceTypes($jsonApi, $managerRegistry);
-        $this->registerExtensions($jsonApi);
+            $this->registerResourceTypes($jsonApi, $managerRegistry);
+            $this->registerExtensions($jsonApi);
 
-        $this->app->bind(JsonApi::class, function () use ($jsonApi) {
-            return $jsonApi;
+            $this->app->bind(JsonApi::class, function () use ($jsonApi) {
+                return $jsonApi;
+            });
         });
     }
 
