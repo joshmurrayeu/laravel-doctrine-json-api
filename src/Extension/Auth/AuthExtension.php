@@ -71,14 +71,20 @@ class AuthExtension extends Extension
     protected function login(Context $context): ResponseInterface
     {
         $request = collect($context->getRequest()->getParsedBody());
+        $data = $request->get('data');
 
-        if (($data = collect($request->get('data'))) && $data->isEmpty()) {
+        if ($data === null) {
             throw new MissingAuthenticationData();
         }
 
-        if (($attributes = collect($data->get('attributes'))) && $attributes->isEmpty()) {
+        $data = collect($data);
+        $attributes = $data->get('attributes');
+
+        if ($attributes === null) {
             throw new MissingAuthenticationAttributes();
         }
+
+        $attributes = collect($attributes);
 
         $hasEmail = $attributes->has('email');
         $hasPassword = $attributes->has('password');
