@@ -157,7 +157,9 @@ class AuthExtension extends Extension
         /** @var JWTSubject $entity */
         $entity = $this->getAuthGuard()->user();
 
-        $entity->setJWT($jwt);
+        if (!empty($jwt)) {
+            $entity->setJWT($jwt);
+        }
 
         return (new Show())->handle($context, $resourceType, $entity);
     }
