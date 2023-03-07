@@ -12,6 +12,8 @@ use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\QueryBuilder;
+use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ObjectManager;
 use Illuminate\Support\Str;
 use JMWD\JsonApi\Error\Internal\InvalidAttributeGetter;
 use JMWD\JsonApi\Error\Internal\InvalidAttributeSetter;
@@ -26,26 +28,36 @@ use Tobyz\JsonApiServer\Schema\Relationship;
 abstract class Adapter implements AdapterInterface
 {
     /**
-     * @var EntityManager $entityManager
+     * @var ManagerRegistry $managerRegistry
      */
-    protected EntityManager $entityManager;
+    protected ManagerRegistry $managerRegistry;
 
     /**
      * @return class-string
      */
     abstract public function adapterFor(): string;
 
-    public function __construct(EntityManager $entityManager)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        $this->entityManager = $entityManager;
+        $this->managerRegistry = $managerRegistry;
     }
 
     /**
-     * @return EntityManager
+     * @return ManagerRegistry
      */
-    protected function getEntityManager(): EntityManager
+    protected function getManagerRegistry(): ManagerRegistry
     {
-        return $this->entityManager;
+        return $this->managerRegistry;
+    }
+
+    /**
+     * @return ObjectManager|EntityManager
+     */
+    public function getEntityManager(): ObjectManager|EntityManager
+    {
+        return $this->getManagerRegistry()->getManagerForClass(
+            $this->adapterFor()
+        );
     }
 
     /**
@@ -320,10 +332,10 @@ abstract class Adapter implements AdapterInterface
      */
     public function save($model): void
     {
-        $entityManager = $this->getEntityManager();
+        $ManagerRegistry = $this->getEntityManager();
 
-        $entityManager->persist($model);
-        $entityManager->flush();
+        $ManagerRegistry->persist($model);
+        $ManagerRegistry->flush();
     }
 
     /**

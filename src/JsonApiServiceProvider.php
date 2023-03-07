@@ -2,12 +2,10 @@
 
 namespace JMWD\JsonApi;
 
-use Doctrine\ORM\EntityManager;
+use Doctrine\Persistence\ManagerRegistry;
 use Illuminate\Support\ServiceProvider;
 use JMWD\JsonApi\Database\Adapter;
 use JMWD\JsonApi\Response\Schema;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
 use Tobyz\JsonApiServer\JsonApi;
 
 /**
@@ -21,35 +19,35 @@ class JsonApiServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__ . '/../config/json-api.php' => config_path('dpd.php'),
+            __DIR__ . '/../config/json-api.php' => config_path('json-api.php'),
         ], 'config');
     }
 
     /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     *
      * @return void
      */
     public function register(): void
     {
-        $jsonApi = new JsonApi(url('/v1'));
-        $entityManager = $this->app->get(EntityManager::class);
+        $this->booted(function () {
+            $jsonApi = new JsonApi(url('/v1'));
+            $managerRegistry = $this->app->get(ManagerRegistry::class);
 
-        $this->registerResourceTypes($jsonApi, $entityManager);
+            $this->registerResourceTypes($jsonApi, $managerRegistry);
+            $this->registerExtensions($jsonApi);
 
-        $this->app->bind(JsonApi::class, function () use ($jsonApi) {
-            return $jsonApi;
+            $this->app->bind(JsonApi::class, function () use ($jsonApi) {
+                return $jsonApi;
+            });
         });
     }
 
     /**
-     * @param JsonApi       $jsonApi
-     * @param EntityManager $entityManager
+     * @param JsonApi         $jsonApi
+     * @param ManagerRegistry $managerRegistry
      *
      * @return void
      */
-    protected function registerResourceTypes(JsonApi $jsonApi, EntityManager $entityManager): void
+    protected function registerResourceTypes(JsonApi $jsonApi, ManagerRegistry $managerRegistry): void
     {
         $resourceTypes = config('json-api.resourceTypes');
 
@@ -58,12 +56,31 @@ class JsonApiServiceProvider extends ServiceProvider
             $adapterName = key($utilities);
 
             /** @var Adapter $adapter */
-            $adapter = new $adapterName($entityManager);
+            $adapter = new $adapterName($managerRegistry);
 
             /** @var Schema $schema */
             $schema = new $schemaName();
 
             $jsonApi->resourceType($resourceType, $adapter, $schema->toClosure());
+        }
+    }
+
+    /**
+     * @param JsonApi $jsonApi
+     *
+     * @return void
+     */
+    protected function registerExtensions(JsonApi $jsonApi): void
+    {
+        $extensions = config('json-api.extensions');
+
+        foreach ($extensions as $extension => $options) {
+            if (is_numeric($extension)) {
+                $extension = $options;
+                $options = [];
+            }
+
+            $jsonApi->extension(new $extension($options));
         }
     }
 }

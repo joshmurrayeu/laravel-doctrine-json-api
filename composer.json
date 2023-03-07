@@ -27,5 +27,12 @@
   "scripts": {
     "php-cs-fixer:dummy": "php-cs-fixer fix --config=./.php_cs --dry-run",
     "php-cs-fixer:real": "php-cs-fixer fix --config=./.php_cs"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "JMWD\\JsonApi\\JsonApiServiceProvider"
+      ]
+    }
   }
 }
