@@ -28,7 +28,7 @@ class JsonApiServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->booting(function () {
+        $this->booted(function () {
             $jsonApi = new JsonApi(url('/v1'));
             $managerRegistry = $this->app->get(ManagerRegistry::class);
 
