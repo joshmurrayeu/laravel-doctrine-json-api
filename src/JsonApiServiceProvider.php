@@ -19,7 +19,7 @@ class JsonApiServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__ . '/../config/json-api.php' => config_path('dpd.php'),
+            __DIR__ . '/../config/json-api.php' => config_path('json-api.php'),
         ], 'config');
     }
 
